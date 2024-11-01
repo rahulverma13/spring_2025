@@ -1,12 +1,12 @@
-package com.nighthawk.spring_portfolio.mvc.note;
+package com.nighthawk.spring_portfolio.mvc.person.note;
 
 import java.util.List;
-
-import jakarta.transaction.Transactional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.nighthawk.spring_portfolio.mvc.person.Person;
+
+import jakarta.transaction.Transactional;
 
 public interface NoteJpaRepository extends JpaRepository<Note, Long> {
     List<Person> findByPersonId(Long id);

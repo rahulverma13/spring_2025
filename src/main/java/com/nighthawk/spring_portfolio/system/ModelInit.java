@@ -1,26 +1,25 @@
 package com.nighthawk.spring_portfolio.system;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nighthawk.spring_portfolio.mvc.announcement.Announcement;
+import com.nighthawk.spring_portfolio.mvc.announcement.AnnouncementJPA;
 import com.nighthawk.spring_portfolio.mvc.jokes.Jokes;
 import com.nighthawk.spring_portfolio.mvc.jokes.JokesJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.note.Note;
-import com.nighthawk.spring_portfolio.mvc.note.NoteJpaRepository;
 import com.nighthawk.spring_portfolio.mvc.person.Person;
 import com.nighthawk.spring_portfolio.mvc.person.PersonDetailsService;
 import com.nighthawk.spring_portfolio.mvc.person.PersonRole;
 import com.nighthawk.spring_portfolio.mvc.person.PersonRoleJpaRepository;
-import com.nighthawk.spring_portfolio.mvc.announcement.Announcement;
-import com.nighthawk.spring_portfolio.mvc.announcement.AnnouncementJPA;
-
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.nighthawk.spring_portfolio.mvc.person.note.Note;
+import com.nighthawk.spring_portfolio.mvc.person.note.NoteJpaRepository;
 
 @Component
 @Configuration // Scans Application for ModelInit Bean, this detects CommandLineRunner

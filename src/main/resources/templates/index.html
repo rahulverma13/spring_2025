@@ -1,75 +1,271 @@
-<!-- This page is illustrative and contains ideas about HTML formatting -->
-<!DOCTYPE HTML>
-<!-- Signals to the Layout Dialect which layout should be used to decorate this View -->
-<html xmlns:layout="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml"
-      layout:decorate="~{layouts/base}" lang="en">
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Intro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .modal-active {
+            overflow-x: hidden;
+            overflow-y: visible !important;
+        }
+    </style>
 </head>
+<body class="p-6 bg-gray-100">
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Assignment Tracker</h1>
+        
+        <!-- Role Toggle -->
+        <div class="mb-6">
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="roleToggle" class="sr-only peer">
+                <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <span class="ml-3 text-sm font-medium text-gray-900" id="roleLabel">Student Mode</span>
+            </label>
+        </div>
 
-<body>
-<th:block layout:fragment="body" th:remove="tag">
-    <!-- Start of body content specific to page -->
-    <div class="px-5 py-5 mx-auto">
-        <h1><strong>Java Home Page</strong></h1>
-        <div class="row">
-            <div class="col-4">
-                <div class="card">
-                    <img class="card-img-top" th:src="@{/images/java.png}" alt="Java Development" height="250">
-                    <div class="card-body">
-                    <h5 class="card-title">What should Java Developers learn?</h5>
-                    <p class="card-text">
-                        <ol>
-                            <li>Java 11-17 is used for PBL. Java 8 appears to be College Board standard.  Java features like Reactive Streams, HTTP2 client, JShell, React JS are more recent than 8.</li>
-                            <li>GitHub.  Learning to master managing change, branches, pull requests, and more.</li>
-                            <li>Development DevOps. Java programmers should have a passion for managing the environment and learning automation (Git, Maven, Docker).</li>
-                            <li>REST and Microservice using Spring.  Mastering creating and consuming RESTful APIs</li>
-                        </ol>
-                    </p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
-                </div>
+        <!-- Teacher Interface -->
+        <div id="teacherInterface" class="hidden">
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Add Assignment</h2>
+                <form id="assignmentForm" class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <input type="text" id="name" placeholder="Name" class="border rounded p-2" required>
+                    <input type="text" id="type" placeholder="Type" class="border rounded p-2" required>
+                    <input type="text" id="description" placeholder="Description" class="border rounded p-2" required>
+                    <input type="date" id="dueDate" class="border rounded p-2" required>
+                    <button type="submit" class="bg-blue-500 text-white rounded p-2 hover:bg-blue-600 transition duration-200">Add Assignment</button>
+                </form>
             </div>
-            <div class="col-4">
-                <div class="card">
-                    <img class="card-img-top" th:src="@{/images/spring.png}" alt="Spring Development" height="250">
-                    <div class="card-body">
-                    <h5 class="card-title">What is Spring?</h5>
-                    <p class="card-text">
-                        <ol>
-                            <li>Spring Framework is the most popular application development framework of Java. </li>
-                            <li>Spring Boot helps to create a stand-alone application with less configuration.</li>
-                            <li>Spring MVC is a model view controller-based web framework under the Spring framework.</li>
-                            <li>ThymeLeaf is a server-side Java template engine, supports HTML5 JVM web development, and provides full integration with Spring Framework.</li>
-                        </ol>
-                    </p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
+        </div>
+
+        <!-- Assignments Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="assignmentsTable" class="bg-white divide-y divide-gray-200"></tbody>
+            </table>
+        </div>
+
+        <!-- Submissions Modal -->
+        <div id="submissionsModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Submissions</h3>
+                    <button onclick="closeSubmissionsModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
+                <div id="submissionsList" class="max-h-60 overflow-y-auto"></div>
             </div>
-            <div class="col-4">
-                <div class="card">
-                    <img class="card-img-top" th:src="@{/images/pojo.jpeg}" alt="Java Persistence" height="250">
-                    <div class="card-body">
-                    <h5 class="card-title">How do you create Persistent data?</h5>
-                    <p class="card-text">
-                        <ol>
-                            <li>Java Persistent API (JPA) provides a query language that allows create, read, update, and delete objects from a database.</li>
-                            <li>Beans, Controller Code, and Business logic interact with the JPA to manage data in and out of the Database.</li>
-                            <li>An Object-Relational Model (ORM) mapping Java classes (entities + supporting structures) with a relational database</li>
-                            <li>Plain Old Java Objects (POJO) are the Class definitions that are foundations for JPA and ORM, see the @entity declaration over the Class definition.</li>
-                        </ol>
-                    </p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
-                </div>
-            </div>
-            
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
         </div>
     </div>
-    <!-- End of body content specific to page -->
-</th:block>
-</body>
 
+    <script>
+        let isTeacherMode = false;
+        const roleToggle = document.getElementById('roleToggle');
+        const roleLabel = document.getElementById('roleLabel');
+        const teacherInterface = document.getElementById('teacherInterface');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        // Show/Hide Loading Spinner
+        function showLoading() {
+            loadingSpinner.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingSpinner.classList.add('hidden');
+        }
+
+        // Role Toggle Functionality
+        roleToggle.addEventListener('change', function() {
+            isTeacherMode = this.checked;
+            roleLabel.textContent = isTeacherMode ? 'Teacher Mode' : 'Student Mode';
+            teacherInterface.style.display = isTeacherMode ? 'block' : 'none';
+            loadAssignments();
+        });
+
+        // Load Assignments
+        async function loadAssignments() {
+            showLoading();
+            try {
+                const response = await fetch('/api/assignments');
+                const assignments = await response.json();
+                const tbody = document.getElementById('assignmentsTable');
+                tbody.innerHTML = '';
+
+                assignments.forEach(assignment => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${assignment.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${assignment.type}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${assignment.description}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${assignment.dueDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${isTeacherMode ? 
+                                `<button onclick="viewSubmissions(${assignment.id})" class="text-blue-600 hover:text-blue-900 mr-2 transition duration-200">View Submissions</button>
+                                 <button onclick="deleteAssignment('${assignment.name}')" class="text-red-600 hover:text-red-900 transition duration-200">Delete</button>` :
+                                `<button onclick="submitAssignment(${assignment.id})" class="text-green-600 hover:text-green-900 transition duration-200">Submit</button>`
+                            }
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Error loading assignments:', error);
+                alert('Failed to load assignments. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Add Assignment
+        document.getElementById('assignmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading();
+            const formData = new FormData();
+            formData.append('name', document.getElementById('name').value);
+            formData.append('type', document.getElementById('type').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('dueDate', document.getElementById('dueDate').value);
+
+            try {
+                const response = await fetch('/api/assignments/create', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                await loadAssignments();
+                e.target.reset();
+            } catch (error) {
+                console.error('Error creating assignment:', error);
+                alert('Failed to create assignment. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Delete Assignment
+        async function deleteAssignment(name) {
+            if (confirm('Are you sure you want to delete this assignment?')) {
+                showLoading();
+                try {
+                    const response = await fetch(`/api/assignments/delete/${name}`, {
+                        method: 'POST'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    await loadAssignments();
+                } catch (error) {
+                    console.error('Error deleting assignment:', error);
+                    alert('Failed to delete assignment. Please try again.');
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+        // Submit Assignment
+        async function submitAssignment(assignmentId) {
+            const content = prompt('Enter your submission:');
+            if (content) {
+                showLoading();
+                try {
+                    const formData = new FormData();
+                    formData.append('content', content);
+                    const response = await fetch(`/api/assignments/submit/${assignmentId}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    alert('Submission successful!');
+                } catch (error) {
+                    console.error('Error submitting assignment:', error);
+                    alert('Failed to submit assignment. Please try again.');
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+        // View Submissions
+        async function viewSubmissions(assignmentId) {
+            showLoading();
+            try {
+                const response = await fetch(`/api/assignments/${assignmentId}/submissions`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const submissions = await response.json();
+                const submissionsList = document.getElementById('submissionsList');
+                submissionsList.innerHTML = submissions.length ? submissions.map(sub => `
+                    <div class="border-b p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-500">Submitted: ${sub.timestamp}</span>
+                        </div>
+                        <p class="text-gray-800">${sub.content}</p>
+                    </div>
+                `).join('') : '<p class="text-gray-500 p-4">No submissions yet</p>';
+                
+                document.getElementById('submissionsModal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+                alert('Failed to load submissions. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function closeSubmissionsModal() {
+            document.getElementById('submissionsModal').classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('submissionsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSubmissionsModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSubmissionsModal();
+            }
+        });
+
+        // Initial load
+        loadAssignments();
+    </script>
+</body>
 </html>
